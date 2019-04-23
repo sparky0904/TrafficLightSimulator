@@ -55,7 +55,7 @@ public class CarController : MonoBehaviour
             // Debug.Log("We have detected something with a tag of " + hit.collider.tag);
             if (hit.collider.tag == "Vehicle")
             {
-                Debug.Log("We are close to a vehicle, need to stop..");
+                // Debug.Log("We are close to a vehicle, need to stop..");
                 m_carStatus = CarStatus.SlowingDown;
 
                 if (hit.distance > (int)(m_DistanceToCheck * 0.2f))
