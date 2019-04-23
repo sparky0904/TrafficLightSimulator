@@ -61,12 +61,13 @@ public class CarController : MonoBehaviour
                 break;
         }
 
-        // Check if were at max speed
+        // Check if were at close to max speed
         if (Speed >= (MaxSpeed * 0.99f))
         {
             m_carStatus = CarStatus.MaxSpeed;
             Speed = MaxSpeed;
         }
+
         // Move the car, we use move position to keep the physics checks inside unity
         m_RB.MovePosition(transform.position + transform.forward * Time.deltaTime * Speed);
     }
