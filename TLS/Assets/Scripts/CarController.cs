@@ -12,22 +12,24 @@ public class CarController : MonoBehaviour
     public float AccelerationRate;
     public float BrakeRate;
 
-    private Rigidbody RB;
-    private CarStatus carStatus;
+    private Rigidbody m_RB;
+    private CarStatus m_carStatus;
+    private float m_TargetSpeed;
 
     private enum CarStatus
     {
         Stopped,
         Accelerating,
-        Stopping,
+        SlowingDown,
         MaxSpeed
     }
 
     // Use this for initialization
     private void Start()
     {
-        RB = GetComponent<Rigidbody>();
-        carStatus = CarStatus.Accelerating;
+        m_RB = GetComponent<Rigidbody>();
+        m_carStatus = CarStatus.Accelerating;
+        m_TargetSpeed = MaxSpeed;
 
         AccelerationRate = DefaultAccelerationRate;
         BrakeRate = DefaultBrakeRate;
@@ -36,18 +38,19 @@ public class CarController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        switch (carStatus)
+        // Set the speed based on the status of the car
+        switch (m_carStatus)
         {
             case CarStatus.Stopped:
                 BrakeRate = DefaultBrakeRate;
                 break;
 
             case CarStatus.Accelerating:
-                Speed = Mathf.Lerp(Speed, MaxSpeed, Time.deltaTime * AccelerationRate);
+                Speed = Mathf.Lerp(Speed, m_TargetSpeed, Time.deltaTime * AccelerationRate);
                 break;
 
-            case CarStatus.Stopping:
-                Speed = Mathf.Lerp(Speed, 0, Time.deltaTime * BrakeRate);
+            case CarStatus.SlowingDown:
+                Speed = Mathf.Lerp(Speed, m_TargetSpeed, Time.deltaTime * BrakeRate);
                 break;
 
             case CarStatus.MaxSpeed:
@@ -57,7 +60,15 @@ public class CarController : MonoBehaviour
             default:
                 break;
         }
-        RB.MovePosition(transform.position + transform.forward * Time.deltaTime * Speed);
+
+        // Check if were at max speed
+        if (Speed >= (MaxSpeed * 0.99f))
+        {
+            m_carStatus = CarStatus.MaxSpeed;
+            Speed = MaxSpeed;
+        }
+        // Move the car, we use move position to keep the physics checks inside unity
+        m_RB.MovePosition(transform.position + transform.forward * Time.deltaTime * Speed);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -72,7 +83,8 @@ public class CarController : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        carStatus = CarStatus.Accelerating;
+        m_carStatus = CarStatus.Accelerating;
+        m_TargetSpeed = MaxSpeed;
     }
 
     private void HandleTriggerEvent(Collider other)
@@ -81,9 +93,9 @@ public class CarController : MonoBehaviour
         switch (other.transform.tag)
         {
             case "TrafficLight":
-                Debug.Log("Hit a traffic light..");
-                TrafficLightController tlc = other.transform.GetComponent<TrafficLightController>();
-                RespondToTrafficLight(tlc.GetTrafficLightStatus());
+                // Debug.Log("Hit a traffic light..");
+                TrafficLightController theTLC = other.transform.GetComponent<TrafficLightController>();
+                RespondToTrafficLight(theTLC.GetTrafficLightStatus());
                 break;
 
             default:
@@ -91,27 +103,30 @@ public class CarController : MonoBehaviour
         }
     }
 
-    private void RespondToTrafficLight(TrafficLightController.TrafficLightState currentState)
+    private void RespondToTrafficLight(TrafficLightController.TrafficLightState theState)
     {
         // Decide on what to depending on the status
-        switch (currentState)
+        switch (theState)
         {
             case TrafficLightController.TrafficLightState.Green:
-                carStatus = CarStatus.Accelerating;
+                m_carStatus = CarStatus.Accelerating;
+                m_TargetSpeed = MaxSpeed;
                 AccelerationRate = DefaultAccelerationRate;
-                Debug.Log("The traffic light is Green");
+                // Debug.Log("The traffic light is Green");
                 break;
 
             case TrafficLightController.TrafficLightState.Red:
-                carStatus = CarStatus.Stopping;
+                m_carStatus = CarStatus.SlowingDown;
+                m_TargetSpeed = 0;
                 BrakeRate = FastBrakeRate;
-                Debug.Log("The traffic light is Red");
+                //  Debug.Log("The traffic light is Red");
                 break;
 
             case TrafficLightController.TrafficLightState.Amber:
-                carStatus = CarStatus.Stopping;
+                m_carStatus = CarStatus.SlowingDown;
                 BrakeRate = DefaultBrakeRate;
-                Debug.Log("The traffic light is Amber");
+                m_TargetSpeed = MaxSpeed * .2f;
+                // Debug.Log("The traffic light is Amber");
                 break;
 
             default:

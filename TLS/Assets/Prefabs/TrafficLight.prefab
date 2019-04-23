@@ -24,7 +24,7 @@ GameObject:
   - component: {fileID: 65760364795263826}
   - component: {fileID: 114338847330990176}
   m_Layer: 0
-  m_Name: 'TrafficLight #1'
+  m_Name: TrafficLight
   m_TagString: TrafficLight
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
