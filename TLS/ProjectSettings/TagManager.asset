@@ -6,6 +6,7 @@ TagManager:
   tags:
   - TrafficLight
   - TrafficSpawnPoint
+  - Vehicle
   layers:
   - Default
   - TransparentFX

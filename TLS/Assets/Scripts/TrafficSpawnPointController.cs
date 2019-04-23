@@ -29,5 +29,8 @@ public class TrafficSpawnPointController : MonoBehaviour
         Car_Orange = CodeMonkey.Assets.i.car_Orange;
 
         GameObject newVehicle = Instantiate(Car_Orange, this.transform.position, this.transform.rotation);
+        GameObject SpawnGOInHierarchy;
+        SpawnGOInHierarchy = GameObject.Find("Game Management/SpawnedObjects");
+        newVehicle.transform.parent = SpawnGOInHierarchy.transform;
     }
 }

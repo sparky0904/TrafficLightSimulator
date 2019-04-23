@@ -8,6 +8,7 @@ public class CarController : MonoBehaviour
     public float DefaultAccelerationRate = 0.5f;
     public float DefaultBrakeRate = 0.4f;
     public float FastBrakeRate = 0.6f;
+    public float EmergencyBrakeRate = 0.9f;
 
     public float AccelerationRate;
     public float BrakeRate;
@@ -38,6 +39,44 @@ public class CarController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        // Check ahead to see if there is a vehicle and we need to stop!!
+
+        // Send raycast forward
+        RaycastHit hit;
+        int m_DistanceToCheck = 10;
+
+        // Does the ray intersect and objects
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, m_DistanceToCheck))
+        {
+            // There is a something
+            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
+
+            // Check ahead to see if there is a vehicle
+            // Debug.Log("We have detected something with a tag of " + hit.collider.tag);
+            if (hit.collider.tag == "Vehicle")
+            {
+                Debug.Log("We are close to a vehicle, need to stop..");
+                m_carStatus = CarStatus.SlowingDown;
+
+                if (hit.distance > (int)(m_DistanceToCheck * 0.2f))
+                {
+                    // Slow down slowly until were close
+                    m_TargetSpeed = hit.collider.GetComponent<CarController>().Speed;
+                    BrakeRate = DefaultBrakeRate;
+                }
+                else
+                {
+                    // were getting close so lets stop
+                    m_TargetSpeed = 0;
+                    BrakeRate = EmergencyBrakeRate;
+                }
+            }
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * m_DistanceToCheck, Color.white);
+        }
+
         // Set the speed based on the status of the car
         switch (m_carStatus)
         {
@@ -99,9 +138,22 @@ public class CarController : MonoBehaviour
                 RespondToTrafficLight(theTLC.GetTrafficLightStatus());
                 break;
 
+            case "Vehicle":
+                m_carStatus = CarStatus.Stopped;
+                m_TargetSpeed = 0;
+                break;
+
             default:
                 break;
         }
+    }
+
+    private void ResponseToVehicle(Collider other)
+    {
+        // Check how close we are to decie how much we need to break
+        m_carStatus = CarStatus.SlowingDown;
+        m_TargetSpeed = other.transform.GetComponent<CarController>().Speed;
+        BrakeRate = FastBrakeRate;
     }
 
     private void RespondToTrafficLight(TrafficLightController.TrafficLightState theState)
