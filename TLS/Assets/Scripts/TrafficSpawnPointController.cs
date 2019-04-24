@@ -16,7 +16,7 @@ public class TrafficSpawnPointController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        if (Time.time > m_nextSpawnTime)
+        if (Time.time > m_nextSpawnTime && m_trafficSpawnPointConfig.Enabled)
         {
             SpawnNewVehicle();
             m_nextSpawnTime = Time.time + (float)m_trafficSpawnPointConfig.SpawnTimeInMinutes;
