@@ -13,6 +13,7 @@ public class TrafficLightController : MonoBehaviour
     }
 
     public Material GreenMaterial, AmberMaterial, RedMaterial;
+    public GameObject RedLight, AmberLight, GreenLight;
     public UnityEngine.UI.Text InfoPanel;
     public bool Selected = false;
 
@@ -40,13 +41,15 @@ public class TrafficLightController : MonoBehaviour
         m_MeshRen = GetComponent<MeshRenderer>();
 
         // m_Config.Add(new TrafficLightConfig());  // Create a default config line (is created by the default constructor)
-        m_Config.Add(new TrafficLightConfig(new DateTime(1900, 1, 1, 00, 00, 00), new DateTime(1900, 1, 1, 00, 05, 00), 5, 3, 10, 5));
-        m_Config.Add(new TrafficLightConfig(new DateTime(1900, 1, 1, 00, 06, 00), new DateTime(1900, 1, 1, 00, 10, 00), 5, 3, 10, 5));
-        m_Config.Add(new TrafficLightConfig(new DateTime(1900, 1, 1, 00, 11, 00), new DateTime(1900, 1, 1, 23, 59, 00), 8, 5, 5, 8));
+        m_Config.Add(new TrafficLightConfig(new DateTime(1900, 1, 1, 00, 00, 00),
+            new DateTime(1900, 1, 1, 00, 15, 00), 5, 3, 10, 5));
+        m_Config.Add(new TrafficLightConfig(new DateTime(1900, 1, 1, 00, 16, 00), new DateTime(1900, 1, 1, 00, 10, 00), 5, 3, 30, 5));
+        m_Config.Add(new TrafficLightConfig(new DateTime(1900, 1, 1, 00, 31, 00), new DateTime(1900, 1, 1, 23, 59, 00), 8, 5, 5, 8));
 
         m_currentConfig = m_Config[0]; // Set the config to the first one, will get updated on first update to the right config based on time of day
     }
 
+    // Updates the Info Panel if the current traffic light is selected
     private void UpdateInforPanel()
     {
         if (Selected && InfoPanel != null)
@@ -64,6 +67,9 @@ public class TrafficLightController : MonoBehaviour
             {
                 theText += " - " + item.StartTime.ToString("HH:mm") + " - " + item.EndTime.ToString("HH:mm") + "\n";
             }
+
+            theText += String.Format("Time of Day Reported as:\n{0}\n", GetTimestamp(TimeOfDayManager.TimeOfDay));
+            theText += String.Format("Current Config start time: \n{0}\n", GetTimestamp(m_currentConfig.StartTime));
 
             theText += "\n";
 
@@ -120,14 +126,26 @@ public class TrafficLightController : MonoBehaviour
         m_currentTimer += Time.deltaTime;
     }
 
+    // Checks to see if we need to change the config on the traffic light
     private void CheckIfConfigChanged()
     {
-        if (GetTimestamp(TimeOfDayManager.TimeOfDay) > GetTimestamp(m_currentConfig.EndTime))
+        if (!isInbetween(GetTimestamp(TimeOfDayManager.TimeOfDay), GetTimestamp(m_currentConfig.StartTime), GetTimestamp(m_currentConfig.EndTime)))
         {
-            Debug.Log("We have gone past end of the current config time");
+            // We know need to change the config
+            SelectNewConfig();
+            if (Selected)
+            {
+                Debug.Log(String.Format("Traffic ID/Name: [{0}] {1} We have gone past end of the current config time.", this.GetInstanceID().ToString(), this.name));
+            }
         }
     }
 
+    // Selects the next config which matches the time of day
+    private void SelectNewConfig()
+    {
+    }
+
+    // A help function to retrieve a timestamp for the current day as thats all we are concerned about interms of config
     private DateTime GetTimestamp(DateTime theTimestamp)
     {
         DateTime mTimestamp;
@@ -138,6 +156,17 @@ public class TrafficLightController : MonoBehaviour
         return mTimestamp;
     }
 
+    // Help funciton - lets us know if the time givene is inbetween the start and end values proided
+    private bool isInbetween(DateTime CompareValue, DateTime StartValue, DateTime EndValue)
+    {
+        bool m_returnValue = false;
+
+        m_returnValue = (CompareValue >= StartValue) && (CompareValue <= EndValue);
+
+        return m_returnValue;
+    }
+
+    // Sets the colour of the traffice light depending on the current state
     private void SetColourOfTrafficLight()
     {
         // Set the colour depending on the status
@@ -162,11 +191,13 @@ public class TrafficLightController : MonoBehaviour
 
     #region Public Methods
 
+    // Allows setting of the status from outside class
     public void SetTrafficLightStatus(TrafficLightState NewState)
     {
         m_CurrentState = NewState;
     }
 
+    // Public method to retrieve the current status
     public TrafficLightState GetTrafficLightStatus()
     {
         return m_CurrentState;
